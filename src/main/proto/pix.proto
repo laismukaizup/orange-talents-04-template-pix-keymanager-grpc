@@ -7,14 +7,34 @@ option objc_class_prefix = "HLW";
 
 package br.com.zup.academy;
 
-service PixService {
-  rpc send (PixRequest) returns (PixReply) {}
+service PixGrpcService {
+        rpc cadastrar (PixGrpcRequest) returns (PixGrpcResponse) {}
 }
 
-message PixRequest {
-  string name = 1;
+enum TipoChave {
+    CHAVE_ALEATORIA = 0; //default value
+    CPF = 1;
+    CELULAR = 2;
+    EMAIL = 3;
+}
+enum TipoConta {
+    INDEFINIDO = 0;
+    CONTA_CORRENTE = 1;
+    CONTA_POUPANCA = 2;
 }
 
-message PixReply {
-  string message = 1;
+message PixGrpcRequest {
+    string idCliente = 1;
+    TipoChave tipoChave = 2;
+    string valorChave = 3;
+    TipoConta tipoConta = 4;
+}
+
+message PixGrpcResponse {
+    int64 id = 1;
+}
+
+message ErrorDetails {
+    int32 code = 1;
+    string message = 2;
 }
