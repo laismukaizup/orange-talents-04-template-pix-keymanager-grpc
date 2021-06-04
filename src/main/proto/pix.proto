@@ -5,33 +5,35 @@ option java_package = "br.com.zup.academy";
 option java_outer_classname = "Pix";
 option objc_class_prefix = "HLW";
 
-package br.com.zup.academy;
+package br.com.zup.grpc;
 
-service PixGrpcService {
-        rpc cadastrar (PixGrpcRequest) returns (PixGrpcResponse) {}
+service KeymanagerRegistraGrpcService {
+    rpc cadastrar (RegistraChavePixRequest) returns (RegistraChavePixResponse) {}
 }
 
-enum TipoChave {
-    CHAVE_ALEATORIA = 0; //default value
+enum TipoDeChave {
+    UNKNOWN_TIPO_CHAVE = 0;
     CPF = 1;
     CELULAR = 2;
     EMAIL = 3;
+    CHAVE_ALEATORIA = 4;
 }
-enum TipoConta {
-    INDEFINIDO = 0;
+enum TipoDeConta {
+    UNKNOWN_TIPO_CONTA = 0;
     CONTA_CORRENTE = 1;
     CONTA_POUPANCA = 2;
 }
 
-message PixGrpcRequest {
-    string idCliente = 1;
-    TipoChave tipoChave = 2;
+message RegistraChavePixRequest {
+    string clienteId = 1;
+    TipoDeChave tipoChave = 2;
     string valorChave = 3;
-    TipoConta tipoConta = 4;
+    TipoDeConta tipoConta = 4;
 }
 
-message PixGrpcResponse {
-    int64 id = 1;
+message RegistraChavePixResponse {
+    string clienteId = 1;
+    string pixId = 2;
 }
 
 message ErrorDetails {
