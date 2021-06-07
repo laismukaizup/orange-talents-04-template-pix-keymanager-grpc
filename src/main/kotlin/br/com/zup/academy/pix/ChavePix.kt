@@ -1,10 +1,13 @@
 package br.com.zup.academy.pix
 
+import br.com.zup.academy.TipoDeChave
 import br.com.zup.academy.TipoDeConta
-import org.hibernate.annotations.GenericGenerator
 import java.time.LocalDateTime
 import java.util.*
-import javax.persistence.*
+import javax.persistence.Column
+import javax.persistence.Entity
+import javax.persistence.GeneratedValue
+import javax.persistence.Id
 import javax.validation.Valid
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
@@ -22,14 +25,14 @@ data class ChavePix(
     val valorChave: String,
 
     @field:NotNull
-    val tipoConta: TipoDeConta,
+    val tipoConta: br.com.zup.academy.pix.TipoDeConta,
 
     @field:Valid
     val conta: Conta
 ) {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long? = null
+    @GeneratedValue
+    val pixId: UUID? = null
 
     @Column(nullable = false)
     val criadaEm: LocalDateTime = LocalDateTime.now()

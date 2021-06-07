@@ -1,8 +1,9 @@
 package br.com.zup.academy.pix.cadastra
 
+import br.com.zup.academy.itau.ItauClient
 import br.com.zup.academy.pix.ChavePix
 import br.com.zup.academy.pix.ChavePixRepository
-import br.com.zup.academy.itau.ItauClient
+import io.grpc.Status
 import io.micronaut.validation.Validated
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -12,18 +13,14 @@ import javax.validation.Valid
 @Validated
 @Singleton
 class ChavePixService(
-    @Inject val repository: ChavePixRepository,
     @Inject val itauClient: ItauClient
 ) {
 
     @Transactional
     fun cadastra(@Valid request: ChavePixRequest): ChavePix {
-        println()
         val itauResponse = itauClient.consulta(request.clienteId!!, request.tipoConta!!.name)
         val conta = itauResponse.body()?.toModel() ?: throw IllegalStateException("cliente itaú não encontrado")
-
         val chavePix = request.toModel(conta);
-        repository.save(chavePix)
 
         return chavePix
     }
