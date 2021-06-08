@@ -1,16 +1,19 @@
 package br.com.zup.academy.pix.cadastra
 
-import br.com.zup.academy.KeymanagerRegistraGrpcServiceGrpc
-import br.com.zup.academy.RegistraChavePixRequest
-import br.com.zup.academy.TipoDeChave
-import br.com.zup.academy.TipoDeConta
+import br.com.zup.academy.*
 import br.com.zup.academy.itau.ContaResponse
 import br.com.zup.academy.itau.ItauClient
 import br.com.zup.academy.pix.*
+import br.com.zup.academy.pix.modelo.ChavePix
+import br.com.zup.academy.pix.modelo.Conta
+import br.com.zup.academy.pix.modelo.Instituicao
+import br.com.zup.academy.pix.modelo.Titular
 import io.grpc.ManagedChannel
 import io.grpc.Status
 import io.grpc.StatusRuntimeException
+import io.micronaut.context.annotation.Bean
 import io.micronaut.context.annotation.Factory
+import io.micronaut.context.annotation.Replaces
 import io.micronaut.grpc.annotation.GrpcChannel
 import io.micronaut.grpc.server.GrpcServerChannel
 import io.micronaut.http.HttpResponse
@@ -22,13 +25,14 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @MicronautTest(transactional = false)
 internal class CadastraChaveEndpointTest(
     val repository: ChavePixRepository,
-    val grpcClient: KeymanagerRegistraGrpcServiceGrpc.KeymanagerRegistraGrpcServiceBlockingStub
+    val grpcClient: CadastraChavePixGRPCServiceGrpc.CadastraChavePixGRPCServiceBlockingStub
 ) {
 
     @Inject
@@ -42,9 +46,9 @@ internal class CadastraChaveEndpointTest(
     @Test
     internal fun deveInserirUmaChaveNoBanco() {
         val idCliente = "c56dfef4-7901-44fb-84e2-a2cefb157890"
-        val tipoChave = TipoDeChave.CPF
+        val tipoChave = TipoDeChaveGRPC.CPF
         val valorChave = "36967380850"
-        val tipoConta = TipoDeConta.CONTA_CORRENTE
+        val tipoConta = TipoDeContaGRPC.CONTA_CORRENTE
         val nomeInstituicao = "Itau"
         val isbp = "1234"
         val agencia = "456"
@@ -75,11 +79,11 @@ internal class CadastraChaveEndpointTest(
     @Test
     internal fun naoDeveInserirUmaChaveQuandoEncontarValorJaExistente() {
         val idCliente = "c56dfef4-7901-44fb-84e2-a2cefb157890"
-        val tipoChave = br.com.zup.academy.pix.TipoDeChave.CPF
-        val tipoChave2 = br.com.zup.academy.TipoDeChave.CPF
+        val tipoChave = br.com.zup.academy.pix.modelo.TipoDeChave.CPF
+        val tipoChave2 = br.com.zup.academy.TipoDeChaveGRPC.CPF
         val valorChave = "36967380850"
-        val tipoConta = br.com.zup.academy.pix.TipoDeConta.CONTA_CORRENTE
-        val tipoConta2 = br.com.zup.academy.TipoDeConta.CONTA_CORRENTE
+        val tipoConta = br.com.zup.academy.pix.modelo.TipoDeConta.CONTA_CORRENTE
+        val tipoConta2 = br.com.zup.academy.TipoDeContaGRPC.CONTA_CORRENTE
         val nomeInstituicao = "Itau"
         val isbp = "1234"
         val agencia = "456"
@@ -87,7 +91,7 @@ internal class CadastraChaveEndpointTest(
         val cpfTitular = "36967380850"
 
         val conta = Conta(Instituicao(nomeInstituicao, isbp), agencia, numero, Titular(cpfTitular))
-        val chavePixSalvo = repository.save(ChavePix(idCliente, tipoChave, valorChave, tipoConta, conta))
+        repository.save(ChavePix(UUID.fromString(idCliente), tipoChave, valorChave, tipoConta, conta))
 
         val response = assertThrows<StatusRuntimeException> {
             grpcClient.cadastrar(
@@ -109,16 +113,10 @@ internal class CadastraChaveEndpointTest(
     @Test
     internal fun NaoDeveInserirUmaChaveQuandoNaoEncontrarDadoaDaConta() {
         val idCliente = "c56dfef4-7901-44fb-84e2-a2cefb157890"
-        val tipoChave = br.com.zup.academy.pix.TipoDeChave.CPF
-        val tipoChave2 = br.com.zup.academy.TipoDeChave.CPF
+        val tipoChave2 = br.com.zup.academy.TipoDeChaveGRPC.CPF
         val valorChave = "36967380850"
-        val tipoConta = br.com.zup.academy.pix.TipoDeConta.CONTA_CORRENTE
-        val tipoConta2 = br.com.zup.academy.TipoDeConta.CONTA_CORRENTE
-        val nomeInstituicao = "Itau"
-        val isbp = "1234"
-        val agencia = "456"
-        val numero = "12345678-9"
-        val cpfTitular = "36967380850"
+        val tipoConta = br.com.zup.academy.pix.modelo.TipoDeConta.CONTA_CORRENTE
+        val tipoConta2 = br.com.zup.academy.TipoDeContaGRPC.CONTA_CORRENTE
 
         `when`(client.consulta(idCliente, tipoConta.name)).thenReturn(HttpResponse.notFound())
 
@@ -155,11 +153,11 @@ internal class CadastraChaveEndpointTest(
 
     @Factory
     class Clients {
+        @Replaces
         @Singleton
-        fun blockStub(@GrpcChannel(GrpcServerChannel.NAME) channel: ManagedChannel): KeymanagerRegistraGrpcServiceGrpc.KeymanagerRegistraGrpcServiceBlockingStub? {
-            return KeymanagerRegistraGrpcServiceGrpc.newBlockingStub(channel)
+        fun blockStub(@GrpcChannel(GrpcServerChannel.NAME) channel: ManagedChannel): CadastraChavePixGRPCServiceGrpc.CadastraChavePixGRPCServiceBlockingStub? {
+            return CadastraChavePixGRPCServiceGrpc.newBlockingStub(channel)
         }
     }
-
 }
 

@@ -1,6 +1,6 @@
 package br.com.zup.academy
 
-import br.com.zup.academy.pix.cadastra.ChavePixRequest
+import br.com.zup.academy.pix.cadastra.CadastraCPRequest
 import javax.inject.Singleton
 import javax.validation.Constraint
 import javax.validation.ConstraintValidator
@@ -22,9 +22,9 @@ annotation class ValidPixKey(
 )
 
 @Singleton
-class ValidPixKeyValidador: ConstraintValidator<ValidPixKey, ChavePixRequest>{
+class ValidPixKeyValidador: ConstraintValidator<ValidPixKey, CadastraCPRequest>{
 
-    override fun isValid(value: ChavePixRequest?, context: ConstraintValidatorContext?): Boolean {
+    override fun isValid(value: CadastraCPRequest?, context: ConstraintValidatorContext?): Boolean {
         if(value?.tipoChave== null)
             return false
         return value.tipoChave.valida(value.valorChave)

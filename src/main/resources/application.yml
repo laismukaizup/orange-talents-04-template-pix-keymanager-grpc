@@ -23,5 +23,10 @@ jpa:
   default:
     properties:
       hibernate:
+        show_sql: true
         hbm2ddl:
           auto: update
+
+logger:
+  levels:
+    io.micronaut.transaction: DEBUG

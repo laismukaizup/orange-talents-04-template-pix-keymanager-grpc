@@ -1,8 +1,8 @@
 package br.com.zup.academy.itau
 
-import br.com.zup.academy.pix.Conta
-import br.com.zup.academy.pix.Instituicao
-import br.com.zup.academy.pix.Titular
+import br.com.zup.academy.pix.modelo.Conta
+import br.com.zup.academy.pix.modelo.Instituicao
+import br.com.zup.academy.pix.modelo.Titular
 
 data class ContaResponse(
     val instituicao: Instituicao,

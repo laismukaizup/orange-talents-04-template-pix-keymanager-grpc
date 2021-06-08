@@ -1,7 +1,5 @@
-package br.com.zup.academy.pix
+package br.com.zup.academy.pix.modelo
 
-import br.com.zup.academy.TipoDeChave
-import br.com.zup.academy.TipoDeConta
 import java.time.LocalDateTime
 import java.util.*
 import javax.persistence.Column
@@ -14,25 +12,25 @@ import javax.validation.constraints.NotNull
 
 @Entity
 data class ChavePix(
-    @field:NotBlank
-    val idCliente: String,
+    @field:NotNull
+    val idCliente: UUID,
 
     @field:NotNull
-    val tipoChave: br.com.zup.academy.pix.TipoDeChave?,
+    val tipoChave: TipoDeChave?,
 
     @field:NotBlank
     @Column(unique = true)
     val valorChave: String,
 
     @field:NotNull
-    val tipoConta: br.com.zup.academy.pix.TipoDeConta,
+    val tipoConta: TipoDeConta,
 
     @field:Valid
     val conta: Conta
 ) {
     @Id
     @GeneratedValue
-    val pixId: UUID? = null
+    val id: UUID? = null
 
     @Column(nullable = false)
     val criadaEm: LocalDateTime = LocalDateTime.now()

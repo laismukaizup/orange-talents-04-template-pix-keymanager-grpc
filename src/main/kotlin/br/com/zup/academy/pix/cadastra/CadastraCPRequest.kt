@@ -1,27 +1,29 @@
 package br.com.zup.academy.pix.cadastra
 
-import br.com.zup.academy.TipoDeConta
 import br.com.zup.academy.ValidPixKey
-import br.com.zup.academy.pix.ChavePix
-import br.com.zup.academy.pix.Conta
-import br.com.zup.academy.pix.ValidUUID
+import br.com.zup.academy.pix.*
+import br.com.zup.academy.pix.modelo.ChavePix
+import br.com.zup.academy.pix.modelo.Conta
+import br.com.zup.academy.pix.modelo.TipoDeChave
+import br.com.zup.academy.pix.modelo.TipoDeConta
 import io.micronaut.core.annotation.Introspected
-import javax.validation.constraints.NotBlank
+import java.util.*
 import javax.validation.constraints.NotNull
 import javax.validation.constraints.Size
 
+
 @Introspected
 @ValidPixKey
-data class ChavePixRequest(
+data class CadastraCPRequest(
     @ValidUUID
-    @field:NotBlank
-    val clienteId: String?,
     @field:NotNull
-    val tipoChave: br.com.zup.academy.pix.TipoDeChave?,
+    val clienteId: UUID?,
+    @field:NotNull
+    val tipoChave: TipoDeChave?,
     @field:Size(max = 77)
     val valorChave: String?,
     @field:NotNull
-    val tipoConta: br.com.zup.academy.pix.TipoDeConta?
+    val tipoConta: TipoDeConta?
 ) {
     fun toModel(conta: Conta): ChavePix {
 
