@@ -8,7 +8,9 @@ import br.com.zup.academy.handler.ErrorHandler
 import br.com.zup.academy.pix.ChavePixService
 import br.com.zup.academy.pix.cadastra.toModel
 import io.grpc.Status
+import io.grpc.StatusRuntimeException
 import io.grpc.stub.StreamObserver
+import java.lang.RuntimeException
 import javax.inject.Inject
 import javax.inject.Singleton
 import javax.validation.ConstraintViolationException
@@ -38,14 +40,12 @@ class RemoveChaveEndpoint(@Inject private val chavePixService: ChavePixService)
                     .withDescription(e.message)
                     .asRuntimeException()
             )
-        }
-        catch (e: IllegalStateException) {
+        }catch (e: IllegalArgumentException) {
             responseObserver.onError(
                 Status.NOT_FOUND
                     .withDescription(e.message)
                     .asRuntimeException()
             )
         }
-
     }
 }

@@ -11,7 +11,7 @@ import java.util.*
 
 fun RegistraChavePixRequest.toModel(): CadastraCPRequest {
     return CadastraCPRequest(
-        clienteId = UUID.fromString(clienteId),
+        clienteId = clienteId,
         tipoChave = when (tipoChave) {
             TipoDeChaveGRPC.UNKNOWN_TIPO_CHAVE -> null
             else -> TipoDeChave.valueOf(tipoChave.name)
@@ -25,5 +25,5 @@ fun RegistraChavePixRequest.toModel(): CadastraCPRequest {
     )
 }
 fun RemoveChavePixRequest.toModel(): RemoveCPRequest {
-    return RemoveCPRequest(UUID.fromString(clienteId), UUID.fromString(pixId))
+    return RemoveCPRequest(clienteId, pixId)
 }

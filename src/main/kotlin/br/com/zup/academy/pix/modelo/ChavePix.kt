@@ -12,8 +12,8 @@ import javax.validation.constraints.NotNull
 
 @Entity
 data class ChavePix(
-    @field:NotNull
-    val idCliente: UUID,
+    @field:NotBlank
+    val idCliente: String,
 
     @field:NotNull
     val tipoChave: TipoDeChave?,
@@ -29,8 +29,7 @@ data class ChavePix(
     val conta: Conta
 ) {
     @Id
-    @GeneratedValue
-    val id: UUID? = null
+    val id: String? = UUID.randomUUID().toString()
 
     @Column(nullable = false)
     val criadaEm: LocalDateTime = LocalDateTime.now()

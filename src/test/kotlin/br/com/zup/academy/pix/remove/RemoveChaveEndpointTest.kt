@@ -1,65 +1,61 @@
 package br.com.zup.academy.pix.remove
 
-import br.com.zup.academy.*
-import br.com.zup.academy.handler.ErrorHandler
+import br.com.zup.academy.RemoveChavePixGRPCServiceGrpc
+import br.com.zup.academy.RemoveChavePixRequest
 import br.com.zup.academy.pix.ChavePixRepository
+import br.com.zup.academy.pix.modelo.*
 import io.grpc.ManagedChannel
 import io.grpc.Status
 import io.grpc.StatusRuntimeException
-import io.micronaut.context.annotation.Bean
 import io.micronaut.context.annotation.Factory
 import io.micronaut.context.annotation.Replaces
 import io.micronaut.grpc.annotation.GrpcChannel
 import io.micronaut.grpc.server.GrpcServerChannel
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import javax.inject.Singleton
 
 @MicronautTest(transactional = false)
 internal class RemoveChaveEndpointTest(
+    val repository: ChavePixRepository,
     val grpcClient : RemoveChavePixGRPCServiceGrpc.RemoveChavePixGRPCServiceBlockingStub
 )
 {
-
     @Test
     internal fun deveRemoverUmaChave() {
-
+        val tipoChave = TipoDeChave.CPF
+        val valorChave = "36967380850"
+        val tipoConta = TipoDeConta.CONTA_CORRENTE
+        val nomeInstituicao = "Itau"
+        val isbp = "1234"
+        val agencia = "456"
+        val numero = "12345678-9"
+        val cpfTitular = "36967380850"
         val idCliente = "5260263c-a3c1-4727-ae32-3bdb2538841b"
-        val pixId = "8eaeedaf-c83d-4e93-9d58-a998ae0ced38"
+
+        val conta = Conta(Instituicao(nomeInstituicao, isbp), agencia, numero, Titular(cpfTitular))
+        val save = repository.save(ChavePix(idCliente, tipoChave, valorChave, tipoConta, conta))
+
         val response = grpcClient.remover(
             RemoveChavePixRequest.newBuilder()
                 .setClienteId(idCliente)
-                .setPixId(pixId).build()
+                .setPixId(save.id).build()
         )
-        Assertions.assertTrue(response.sucesso)
+        assertTrue(response.sucesso)
     }
 
     @Test
-    internal fun deveRetornarNotFoudCasoChaveNaoEncontrada() {
+    internal fun deveRetornarFailedPreConditionCasoParametrosVazios() {
 
-        val idCliente = "c56dfef4-7901-44fb-84e2-a2cefb157890"
-        val pixId = "eab1d1fc-d388-4ff1-bbb7-be7847cabd0b"
-        val assertThrows = assertThrows<StatusRuntimeException> {
-            val response = grpcClient.remover(
-                RemoveChavePixRequest.newBuilder()
-                    .setClienteId(idCliente)
-                    .setPixId(pixId).build()
-            )
-        }
-        assertEquals(Status.NOT_FOUND.code,assertThrows.status.code)
-    }
-
-    @Test
-    internal fun deveRetornarNotFoundCasoParametrosVazios() {
         val assertThrows = assertThrows<StatusRuntimeException> {
             val response = grpcClient.remover(
                 RemoveChavePixRequest.newBuilder().build()
             )
         }
-        assertEquals(Status.NOT_FOUND.code,assertThrows.status.code)
+        assertEquals(Status.FAILED_PRECONDITION.code,assertThrows.status.code)
     }
 
     @Factory

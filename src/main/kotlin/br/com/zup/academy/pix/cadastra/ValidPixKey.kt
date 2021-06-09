@@ -1,6 +1,7 @@
 package br.com.zup.academy
 
 import br.com.zup.academy.pix.cadastra.CadastraCPRequest
+import br.com.zup.academy.pix.remove.RemoveCPRequest
 import javax.inject.Singleton
 import javax.validation.Constraint
 import javax.validation.ConstraintValidator

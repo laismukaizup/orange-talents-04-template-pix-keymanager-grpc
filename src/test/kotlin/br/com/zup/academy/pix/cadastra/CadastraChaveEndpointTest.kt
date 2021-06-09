@@ -1,17 +1,16 @@
 package br.com.zup.academy.pix.cadastra
 
-import br.com.zup.academy.*
+import br.com.zup.academy.CadastraChavePixGRPCServiceGrpc
+import br.com.zup.academy.RegistraChavePixRequest
+import br.com.zup.academy.TipoDeChaveGRPC
+import br.com.zup.academy.TipoDeContaGRPC
 import br.com.zup.academy.itau.ContaResponse
 import br.com.zup.academy.itau.ItauClient
-import br.com.zup.academy.pix.*
-import br.com.zup.academy.pix.modelo.ChavePix
-import br.com.zup.academy.pix.modelo.Conta
-import br.com.zup.academy.pix.modelo.Instituicao
-import br.com.zup.academy.pix.modelo.Titular
+import br.com.zup.academy.pix.ChavePixRepository
+import br.com.zup.academy.pix.modelo.*
 import io.grpc.ManagedChannel
 import io.grpc.Status
 import io.grpc.StatusRuntimeException
-import io.micronaut.context.annotation.Bean
 import io.micronaut.context.annotation.Factory
 import io.micronaut.context.annotation.Replaces
 import io.micronaut.grpc.annotation.GrpcChannel
@@ -25,7 +24,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
-import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -79,11 +77,11 @@ internal class CadastraChaveEndpointTest(
     @Test
     internal fun naoDeveInserirUmaChaveQuandoEncontarValorJaExistente() {
         val idCliente = "c56dfef4-7901-44fb-84e2-a2cefb157890"
-        val tipoChave = br.com.zup.academy.pix.modelo.TipoDeChave.CPF
-        val tipoChave2 = br.com.zup.academy.TipoDeChaveGRPC.CPF
+        val tipoChave = TipoDeChave.CPF
+        val tipoChave2 = TipoDeChaveGRPC.CPF
         val valorChave = "36967380850"
-        val tipoConta = br.com.zup.academy.pix.modelo.TipoDeConta.CONTA_CORRENTE
-        val tipoConta2 = br.com.zup.academy.TipoDeContaGRPC.CONTA_CORRENTE
+        val tipoConta = TipoDeConta.CONTA_CORRENTE
+        val tipoConta2 = TipoDeContaGRPC.CONTA_CORRENTE
         val nomeInstituicao = "Itau"
         val isbp = "1234"
         val agencia = "456"
@@ -91,7 +89,7 @@ internal class CadastraChaveEndpointTest(
         val cpfTitular = "36967380850"
 
         val conta = Conta(Instituicao(nomeInstituicao, isbp), agencia, numero, Titular(cpfTitular))
-        repository.save(ChavePix(UUID.fromString(idCliente), tipoChave, valorChave, tipoConta, conta))
+        repository.save(ChavePix(idCliente, tipoChave, valorChave, tipoConta, conta))
 
         val response = assertThrows<StatusRuntimeException> {
             grpcClient.cadastrar(

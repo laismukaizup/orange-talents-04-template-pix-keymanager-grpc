@@ -8,6 +8,7 @@ import br.com.zup.academy.pix.modelo.TipoDeChave
 import br.com.zup.academy.pix.modelo.TipoDeConta
 import io.micronaut.core.annotation.Introspected
 import java.util.*
+import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
 import javax.validation.constraints.Size
 
@@ -16,8 +17,8 @@ import javax.validation.constraints.Size
 @ValidPixKey
 data class CadastraCPRequest(
     @ValidUUID
-    @field:NotNull
-    val clienteId: UUID?,
+    @field:NotBlank
+    val clienteId: String?,
     @field:NotNull
     val tipoChave: TipoDeChave?,
     @field:Size(max = 77)
