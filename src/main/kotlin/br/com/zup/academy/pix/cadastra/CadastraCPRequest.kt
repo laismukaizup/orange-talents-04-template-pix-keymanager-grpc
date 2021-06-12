@@ -1,6 +1,7 @@
 package br.com.zup.academy.pix.cadastra
 
 import br.com.zup.academy.ValidPixKey
+import br.com.zup.academy.bancoCentral.*
 import br.com.zup.academy.pix.*
 import br.com.zup.academy.pix.modelo.ChavePix
 import br.com.zup.academy.pix.modelo.Conta
@@ -22,12 +23,30 @@ data class CadastraCPRequest(
     @field:NotNull
     val tipoChave: TipoDeChave?,
     @field:Size(max = 77)
-    val valorChave: String?,
+    var valorChave: String?,
     @field:NotNull
     val tipoConta: TipoDeConta?
 ) {
     fun toModel(conta: Conta): ChavePix {
-
         return ChavePix(clienteId!!, tipoChave, valorChave!!, tipoConta!!, conta)
+    }
+
+    fun toCreatePixKeyRequest(conta: Conta): CreatePixKeyRequest {
+        return CreatePixKeyRequest(
+            tipoChave!!.converter(),
+            valorChave!!,
+            BankAccount(
+                conta.instituicao.ispb,
+                conta.agencia,
+                conta.numero,
+                tipoConta!!.converter()
+            ),
+            Owner(OwnerType.LEGAL_PERSON, conta.titular.nome, conta.titular.cpf)
+        )
+    }
+
+    fun validaValorChave(bcbResponse: CreatePixKeyResponse) {
+        if (tipoChave!! == TipoDeChave.CHAVE_ALEATORIA)
+            valorChave = bcbResponse.key
     }
 }

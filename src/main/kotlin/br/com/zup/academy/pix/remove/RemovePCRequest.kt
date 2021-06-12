@@ -10,11 +10,11 @@ import javax.validation.constraints.NotNull
 
 @Introspected
 class RemoveCPRequest(
-    @field:NotNull
     @ValidUUID
+    @field:NotNull
     val clienteId: String,
-    @field:NotNull
     @ValidUUID
+    @field:NotNull
     val pixId: String
 )
 {

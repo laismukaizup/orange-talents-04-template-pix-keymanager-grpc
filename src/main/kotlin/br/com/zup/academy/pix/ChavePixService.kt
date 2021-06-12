@@ -1,11 +1,14 @@
 package br.com.zup.academy.pix
 
+import br.com.zup.academy.bancoCentral.BCBClient
+import br.com.zup.academy.bancoCentral.DeletePixKeyRequest
+import br.com.zup.academy.handler.ChavePixExisteException
+import br.com.zup.academy.handler.ChavePixNaoEncontradaException
 import br.com.zup.academy.itau.ItauClient
 import br.com.zup.academy.pix.cadastra.CadastraCPRequest
 import br.com.zup.academy.pix.modelo.ChavePix
 import br.com.zup.academy.pix.remove.RemoveCPRequest
-import io.grpc.Status
-import io.grpc.StatusRuntimeException
+import io.micronaut.http.HttpStatus
 import io.micronaut.validation.Validated
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -16,13 +19,25 @@ import javax.validation.Valid
 @Singleton
 class ChavePixService(
     @Inject val repository: ChavePixRepository,
-    @Inject val itauClient: ItauClient
+    @Inject val itauClient: ItauClient,
+    @Inject val bcbClient: BCBClient
 ) {
 
     @Transactional
     fun cadastra(@Valid request: CadastraCPRequest): ChavePix {
+
+        if (repository.existsByValorChave(request.valorChave!!))
+            throw ChavePixExisteException("Chave pix já cadastrada")
+
         val itauResponse = itauClient.consulta(request.clienteId.toString(), request.tipoConta!!.name)
         val conta = itauResponse.body()?.toModel() ?: throw IllegalStateException("cliente itau não encontrado")
+
+        val createPixKeyRequest = request.toCreatePixKeyRequest(conta)
+        val bcbResponse = bcbClient.enviaRegistro(createPixKeyRequest)
+        if (bcbResponse.status != HttpStatus.CREATED)
+            throw IllegalStateException("erro ao registrar chave no BCB")
+        request.validaValorChave(bcbResponse.body());
+
         val chavePix = request.toModel(conta);
         repository.save(chavePix)
 
@@ -30,23 +45,22 @@ class ChavePixService(
     }
 
     fun remove(@Valid request: RemoveCPRequest): Boolean {
-        val itauResponse = itauClient.consulta(request.clienteId.toString())
-        itauResponse.body()?.toModel() ?: throw IllegalStateException("cliente itau não encontrado")
-        //verifica se existe uma chave para o cliente/idpix passado como parametro
-        val findByIdClienteAndPixId = repository.find(
-            request.clienteId,
-            request.pixId
-        )
-        if (findByIdClienteAndPixId.isEmpty) {
-            throw StatusRuntimeException(Status.NOT_FOUND.withDescription("chave não encontrada"))
-        }
+        val itauResponse = itauClient.consulta(request.clienteId)
+        val conta = itauResponse.body()?.toModel() ?: throw IllegalStateException("cliente itau não encontrado")
+
+        val possivelChavePix = repository.find(request.clienteId, request.pixId)
+        if (possivelChavePix.isEmpty)
+            throw ChavePixNaoEncontradaException("chave não encontrada no banco de dados")
+
+        val chavePix = possivelChavePix.get()
+
+        val deletePixKeyRequest = DeletePixKeyRequest(chavePix.valorChave)
+
+        val bcbResponse = bcbClient.deletaChave(chavePix.valorChave, deletePixKeyRequest)
+        if (bcbResponse.status != HttpStatus.OK)
+            throw IllegalStateException("erro ao deletar chave no BCB")
+
         repository.deleteById(request.pixId)
         return true
     }
 }
-
-//
-//val teste = repository.findAll()
-//println("ClienteId :  ${teste.get(1).idCliente} - PixId : ${teste.get(1).pixId} ")
-//val findById = repository.findByPixId(teste.get(1).pixId!!)
-//println("id está presente: " +findById.isPresent)

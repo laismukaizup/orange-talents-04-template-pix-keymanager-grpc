@@ -10,6 +10,6 @@ data class TitularResponse(
     val instituicao: Instituicao,
 ) {
     fun toModel(): Titular {
-        return Titular(cpf)
+        return Titular(cpf, nome, id)
     }
 }

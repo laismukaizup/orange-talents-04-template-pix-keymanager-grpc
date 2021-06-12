@@ -2,10 +2,7 @@ package br.com.zup.academy.pix.modelo
 
 import java.time.LocalDateTime
 import java.util.*
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.GeneratedValue
-import javax.persistence.Id
+import javax.persistence.*
 import javax.validation.Valid
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
@@ -26,6 +23,7 @@ data class ChavePix(
     val tipoConta: TipoDeConta,
 
     @field:Valid
+    @field:ManyToOne(cascade =  arrayOf(CascadeType.PERSIST))
     val conta: Conta
 ) {
     @Id

@@ -41,6 +41,7 @@ internal class CadastraChaveEndpointTest(
         repository.deleteAll()
     }
 
+
     @Test
     internal fun deveInserirUmaChaveNoBanco() {
         val idCliente = "c56dfef4-7901-44fb-84e2-a2cefb157890"
@@ -143,6 +144,8 @@ internal class CadastraChaveEndpointTest(
             Assertions.assertEquals(Status.INVALID_ARGUMENT.code, status.code)
         }
     }
+
+
 
     @MockBean(ItauClient::class)
     fun client(): ItauClient? {

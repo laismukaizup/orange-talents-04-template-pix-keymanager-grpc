@@ -1,5 +1,6 @@
 package br.com.zup.academy.pix.modelo
 
+import br.com.zup.academy.bancoCentral.KeyType
 import org.hibernate.validator.internal.constraintvalidators.hv.EmailValidator
 import org.hibernate.validator.internal.constraintvalidators.hv.br.CPFValidator
 
@@ -41,6 +42,14 @@ enum class TipoDeChave {
         override fun valida(chave: String?) = chave.isNullOrBlank()
     };
 
+    fun converter() : KeyType {
+        return when (this) {
+            CPF -> KeyType.CPF
+            EMAIL -> KeyType.EMAIL
+            CELULAR -> KeyType.PHONE
+            CHAVE_ALEATORIA -> KeyType.RANDOM
+        }
+    }
 
     abstract fun valida(chave: String?): Boolean
 }

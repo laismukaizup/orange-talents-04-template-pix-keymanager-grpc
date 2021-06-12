@@ -1,6 +1,5 @@
 package br.com.zup.academy.pix.remove
 
-import br.com.zup.academy.CadastraChavePixGRPCServiceGrpc
 import br.com.zup.academy.RemoveChavePixGRPCServiceGrpc
 import br.com.zup.academy.RemoveChavePixRequest
 import br.com.zup.academy.RemoveChavePixResponse
@@ -8,18 +7,15 @@ import br.com.zup.academy.handler.ErrorHandler
 import br.com.zup.academy.pix.ChavePixService
 import br.com.zup.academy.pix.cadastra.toModel
 import io.grpc.Status
-import io.grpc.StatusRuntimeException
 import io.grpc.stub.StreamObserver
-import java.lang.RuntimeException
 import javax.inject.Inject
 import javax.inject.Singleton
 import javax.validation.ConstraintViolationException
 
-@Singleton
 @ErrorHandler
-class RemoveChaveEndpoint(@Inject private val chavePixService: ChavePixService)
-    : RemoveChavePixGRPCServiceGrpc.RemoveChavePixGRPCServiceImplBase()
-{
+@Singleton
+class RemoveChaveEndpoint(@Inject private val chavePixService: ChavePixService) :
+    RemoveChavePixGRPCServiceGrpc.RemoveChavePixGRPCServiceImplBase() {
 
     override fun remover(request: RemoveChavePixRequest, responseObserver: StreamObserver<RemoveChavePixResponse>) {
         try {
@@ -40,7 +36,7 @@ class RemoveChaveEndpoint(@Inject private val chavePixService: ChavePixService)
                     .withDescription(e.message)
                     .asRuntimeException()
             )
-        }catch (e: IllegalArgumentException) {
+        } catch (e: IllegalArgumentException) {
             responseObserver.onError(
                 Status.NOT_FOUND
                     .withDescription(e.message)
