@@ -6,7 +6,7 @@ import javax.persistence.GenerationType
 import javax.persistence.Id
 
 @Entity
-class Titular(
+data class Titular(
     val cpf: String,
     val nome: String,
     val id: String

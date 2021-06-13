@@ -1,6 +1,6 @@
 package br.com.zup.academy.bancoCentral
 
-class BankAccount(
+data class BankAccount(
     val participant: String,
     val branch: String,
     val accountNumber: String,

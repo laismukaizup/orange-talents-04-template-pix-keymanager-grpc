@@ -36,12 +36,6 @@ class RemoveChaveEndpoint(@Inject private val chavePixService: ChavePixService) 
                     .withDescription(e.message)
                     .asRuntimeException()
             )
-        } catch (e: IllegalArgumentException) {
-            responseObserver.onError(
-                Status.NOT_FOUND
-                    .withDescription(e.message)
-                    .asRuntimeException()
-            )
         }
     }
 }

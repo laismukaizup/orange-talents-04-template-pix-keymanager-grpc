@@ -1,5 +1,6 @@
 package br.com.zup.academy.pix.modelo
 
+import br.com.zup.academy.TipoDeChaveGRPC
 import br.com.zup.academy.bancoCentral.KeyType
 import org.hibernate.validator.internal.constraintvalidators.hv.EmailValidator
 import org.hibernate.validator.internal.constraintvalidators.hv.br.CPFValidator
@@ -48,6 +49,14 @@ enum class TipoDeChave {
             EMAIL -> KeyType.EMAIL
             CELULAR -> KeyType.PHONE
             CHAVE_ALEATORIA -> KeyType.RANDOM
+        }
+    }
+    fun converterToGRPCObject() : TipoDeChaveGRPC {
+        return when (this) {
+            CPF -> TipoDeChaveGRPC.CPF
+            EMAIL -> TipoDeChaveGRPC.EMAIL
+            CELULAR -> TipoDeChaveGRPC.CELULAR
+            CHAVE_ALEATORIA -> TipoDeChaveGRPC.CHAVE_ALEATORIA
         }
     }
 

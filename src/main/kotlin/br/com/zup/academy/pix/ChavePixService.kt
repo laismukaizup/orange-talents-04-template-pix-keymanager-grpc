@@ -7,6 +7,7 @@ import br.com.zup.academy.handler.ChavePixNaoEncontradaException
 import br.com.zup.academy.itau.ItauClient
 import br.com.zup.academy.pix.cadastra.CadastraCPRequest
 import br.com.zup.academy.pix.modelo.ChavePix
+import br.com.zup.academy.pix.modelo.TipoDeConta
 import br.com.zup.academy.pix.remove.RemoveCPRequest
 import io.micronaut.http.HttpStatus
 import io.micronaut.validation.Validated
@@ -36,7 +37,7 @@ class ChavePixService(
         val bcbResponse = bcbClient.enviaRegistro(createPixKeyRequest)
         if (bcbResponse.status != HttpStatus.CREATED)
             throw IllegalStateException("erro ao registrar chave no BCB")
-        request.validaValorChave(bcbResponse.body());
+        request.validaValorChave(bcbResponse.body()!!);
 
         val chavePix = request.toModel(conta);
         repository.save(chavePix)
@@ -44,9 +45,11 @@ class ChavePixService(
         return chavePix
     }
 
+    @Transactional
     fun remove(@Valid request: RemoveCPRequest): Boolean {
+
         val itauResponse = itauClient.consulta(request.clienteId)
-        val conta = itauResponse.body()?.toModel() ?: throw IllegalStateException("cliente itau não encontrado")
+        itauResponse.body()?.toModel() ?: throw IllegalStateException("cliente itau não encontrado")
 
         val possivelChavePix = repository.find(request.clienteId, request.pixId)
         if (possivelChavePix.isEmpty)

@@ -7,11 +7,11 @@ import io.micronaut.http.annotation.PathVariable
 import io.micronaut.http.annotation.QueryValue
 import io.micronaut.http.client.annotation.Client
 
-@Client("http://localhost:9091/api/v1/clientes")
+    @Client("http://localhost:9091/api/v1/clientes")
 interface ItauClient {
     @Get("/{clienteId}/contas")
     fun consulta(@PathVariable clienteId: String,@QueryValue tipo: String): HttpResponse<ContaResponse>
 
-    @Get("{clienteId}")
+    @Get("/{clienteId}")
     fun consulta(@PathVariable clienteId: String): HttpResponse<TitularResponse>
 }

@@ -33,7 +33,7 @@ data class CadastraCPRequest(
 
     fun toCreatePixKeyRequest(conta: Conta): CreatePixKeyRequest {
         return CreatePixKeyRequest(
-            tipoChave!!.converter(),
+            tipoChave!!.converter().name,
             valorChave!!,
             BankAccount(
                 conta.instituicao.ispb,

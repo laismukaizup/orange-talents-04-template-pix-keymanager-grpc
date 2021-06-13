@@ -4,6 +4,7 @@ import br.com.zup.academy.CadastraChavePixGRPCServiceGrpc
 import br.com.zup.academy.RegistraChavePixRequest
 import br.com.zup.academy.TipoDeChaveGRPC
 import br.com.zup.academy.TipoDeContaGRPC
+import br.com.zup.academy.bancoCentral.*
 import br.com.zup.academy.itau.ContaResponse
 import br.com.zup.academy.itau.ItauClient
 import br.com.zup.academy.pix.ChavePixRepository
@@ -18,12 +19,10 @@ import io.micronaut.grpc.server.GrpcServerChannel
 import io.micronaut.http.HttpResponse
 import io.micronaut.test.annotation.MockBean
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.*
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
+import java.time.LocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -35,42 +34,91 @@ internal class CadastraChaveEndpointTest(
 
     @Inject
     lateinit var client: ItauClient
+    @Inject
+    lateinit var clientBCB: BCBClient
+
+    lateinit var CHAVE_REQUEST: CadastraCPRequest
+    lateinit var CONTA_RESPONSE: ContaResponse
+
+    lateinit var CREATE_PIX_KEY_REQUEST: CreatePixKeyRequest
+    lateinit var CREATE_PIX_KEY_RESPONSE: CreatePixKeyResponse
+
 
     @BeforeEach
     fun setup() {
+        CHAVE_REQUEST = CadastraCPRequest(
+            "ae93a61c-0642-43b3-bb8e-a17072295955",
+            TipoDeChave.CPF,
+            "40764442058",
+            TipoDeConta.CONTA_POUPANCA
+        )
+        CONTA_RESPONSE = ContaResponse(
+            TipoDeConta.CONTA_POUPANCA,
+            Instituicao("ITAÚ UNIBANCO S.A.", "60701190"),
+            "0001",
+            "125987",
+            Titular("40764442058", "Leonardo Silva", "ae93a61c-0642-43b3-bb8e-a17072295955")
+        )
+
+        `when`(
+            client.consulta(CHAVE_REQUEST.clienteId!!, CHAVE_REQUEST.tipoConta!!.name)
+        ).thenReturn(
+            HttpResponse.ok(CONTA_RESPONSE)
+        )
+        CREATE_PIX_KEY_REQUEST = CreatePixKeyRequest(
+            CHAVE_REQUEST.tipoChave!!.converter().name,
+            CHAVE_REQUEST.valorChave!!,
+            BankAccount(
+                CONTA_RESPONSE.instituicao.ispb,
+                CONTA_RESPONSE.agencia,
+                CONTA_RESPONSE.numero,
+                CHAVE_REQUEST.tipoConta!!.converter()
+            ),
+            Owner(
+                OwnerType.NATURAL_PERSON,
+                CONTA_RESPONSE.titular.nome,
+                CONTA_RESPONSE.titular.cpf
+            )
+        )
+
+        CREATE_PIX_KEY_RESPONSE = CreatePixKeyResponse(
+            CHAVE_REQUEST.tipoChave!!.converter(),
+            CHAVE_REQUEST.valorChave!!,
+            BankAccount(
+                CONTA_RESPONSE.instituicao.ispb,
+                CONTA_RESPONSE.agencia,
+                CONTA_RESPONSE.numero,
+                CHAVE_REQUEST.tipoConta!!.converter()
+            ),
+            Owner(
+                OwnerType.NATURAL_PERSON,
+                CONTA_RESPONSE.titular.nome,
+                CONTA_RESPONSE.titular.cpf
+
+            ),
+            LocalDateTime.now().toString()
+        )
+
+        `when`(
+            clientBCB.enviaRegistro(CREATE_PIX_KEY_REQUEST)
+        ).thenReturn(HttpResponse.ok(CREATE_PIX_KEY_RESPONSE))
+    }
+
+    @AfterEach
+    fun cleanUp() {
         repository.deleteAll()
     }
 
 
     @Test
     internal fun deveInserirUmaChaveNoBanco() {
-        val idCliente = "c56dfef4-7901-44fb-84e2-a2cefb157890"
-        val tipoChave = TipoDeChaveGRPC.CPF
-        val valorChave = "36967380850"
-        val tipoConta = TipoDeContaGRPC.CONTA_CORRENTE
-        val nomeInstituicao = "Itau"
-        val isbp = "1234"
-        val agencia = "456"
-        val numero = "12345678-9"
-        val cpfTitular = "36967380850"
-
-        `when`(client.consulta(idCliente, tipoConta.name)).thenReturn(
-            HttpResponse.ok(
-                ContaResponse(
-                    Instituicao(nomeInstituicao, isbp),
-                    agencia,
-                    numero,
-                    Titular(cpfTitular)
-                )
-            )
-        )
 
         val response = grpcClient.cadastrar(
             RegistraChavePixRequest.newBuilder()
-                .setClienteId(idCliente)
-                .setTipoChave(tipoChave)
-                .setValorChave(valorChave)
-                .setTipoConta(tipoConta).build()
+                .setClienteId(CHAVE_REQUEST.clienteId)
+                .setTipoChave(CHAVE_REQUEST.tipoChave!!.converterToGRPCObject())
+                .setValorChave(CHAVE_REQUEST.valorChave)
+                .setTipoConta(CHAVE_REQUEST.tipoConta!!.converterToGrpcObject()).build()
         )
         Assertions.assertNotNull(response.pixId)
     }
@@ -89,7 +137,10 @@ internal class CadastraChaveEndpointTest(
         val numero = "12345678-9"
         val cpfTitular = "36967380850"
 
-        val conta = Conta(Instituicao(nomeInstituicao, isbp), agencia, numero, Titular(cpfTitular))
+        val conta = Conta(
+            Instituicao(nomeInstituicao, isbp), agencia, numero,
+            Titular(cpfTitular, "Titular", idCliente)
+        )
         repository.save(ChavePix(idCliente, tipoChave, valorChave, tipoConta, conta))
 
         val response = assertThrows<StatusRuntimeException> {
@@ -112,10 +163,10 @@ internal class CadastraChaveEndpointTest(
     @Test
     internal fun NaoDeveInserirUmaChaveQuandoNaoEncontrarDadoaDaConta() {
         val idCliente = "c56dfef4-7901-44fb-84e2-a2cefb157890"
-        val tipoChave2 = br.com.zup.academy.TipoDeChaveGRPC.CPF
+        val tipoChave2 = TipoDeChaveGRPC.CPF
         val valorChave = "36967380850"
-        val tipoConta = br.com.zup.academy.pix.modelo.TipoDeConta.CONTA_CORRENTE
-        val tipoConta2 = br.com.zup.academy.TipoDeContaGRPC.CONTA_CORRENTE
+        val tipoConta = TipoDeConta.CONTA_CORRENTE
+        val tipoConta2 = TipoDeContaGRPC.CONTA_CORRENTE
 
         `when`(client.consulta(idCliente, tipoConta.name)).thenReturn(HttpResponse.notFound())
 
@@ -146,10 +197,14 @@ internal class CadastraChaveEndpointTest(
     }
 
 
-
     @MockBean(ItauClient::class)
     fun client(): ItauClient? {
         return Mockito.mock(ItauClient::class.java)
+    }
+
+    @MockBean(BCBClient::class)
+    fun clientBCB(): BCBClient? {
+        return Mockito.mock(BCBClient::class.java)
     }
 
     @Factory

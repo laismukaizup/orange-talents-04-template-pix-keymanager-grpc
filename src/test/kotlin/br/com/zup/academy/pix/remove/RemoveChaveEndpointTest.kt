@@ -2,67 +2,130 @@ package br.com.zup.academy.pix.remove
 
 import br.com.zup.academy.RemoveChavePixGRPCServiceGrpc
 import br.com.zup.academy.RemoveChavePixRequest
+import br.com.zup.academy.bancoCentral.BCBClient
+import br.com.zup.academy.bancoCentral.DeletePixKeyRequest
+import br.com.zup.academy.bancoCentral.DeletePixKeyResponse
+import br.com.zup.academy.itau.ItauClient
+import br.com.zup.academy.itau.TitularResponse
 import br.com.zup.academy.pix.ChavePixRepository
 import br.com.zup.academy.pix.modelo.*
 import io.grpc.ManagedChannel
-import io.grpc.Status
-import io.grpc.StatusRuntimeException
 import io.micronaut.context.annotation.Factory
 import io.micronaut.context.annotation.Replaces
 import io.micronaut.grpc.annotation.GrpcChannel
 import io.micronaut.grpc.server.GrpcServerChannel
+import io.micronaut.http.HttpResponse
+import io.micronaut.test.annotation.MockBean
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
+import org.mockito.Mockito
+import java.time.LocalDateTime
+import javax.inject.Inject
 import javax.inject.Singleton
 
 @MicronautTest(transactional = false)
 internal class RemoveChaveEndpointTest(
     val repository: ChavePixRepository,
-    val grpcClient : RemoveChavePixGRPCServiceGrpc.RemoveChavePixGRPCServiceBlockingStub
-)
-{
-    @Test
-    internal fun deveRemoverUmaChave() {
-        val tipoChave = TipoDeChave.CPF
-        val valorChave = "36967380850"
-        val tipoConta = TipoDeConta.CONTA_CORRENTE
-        val nomeInstituicao = "Itau"
-        val isbp = "1234"
-        val agencia = "456"
-        val numero = "12345678-9"
-        val cpfTitular = "36967380850"
-        val idCliente = "5260263c-a3c1-4727-ae32-3bdb2538841b"
+    val grpcClient: RemoveChavePixGRPCServiceGrpc.RemoveChavePixGRPCServiceBlockingStub
+) {
+    @Inject
+    lateinit var client: ItauClient
 
-        val conta = Conta(Instituicao(nomeInstituicao, isbp), agencia, numero, Titular(cpfTitular))
-        val save = repository.save(ChavePix(idCliente, tipoChave, valorChave, tipoConta, conta))
+    @Inject
+    lateinit var clientBCB: BCBClient
 
-        val response = grpcClient.remover(
-            RemoveChavePixRequest.newBuilder()
-                .setClienteId(idCliente)
-                .setPixId(save.id).build()
+    lateinit var CHAVE_EXISTENTE: ChavePix
+
+    @BeforeEach
+    fun setup() {
+        CHAVE_EXISTENTE = repository.save(
+            ChavePix(
+                "ae93a61c-0642-43b3-bb8e-a17072295955",
+                TipoDeChave.EMAIL,
+                "leonardo.silva@zup.com.br",
+                TipoDeConta.CONTA_POUPANCA,
+                Conta(
+
+                    Instituicao(
+                        "Itau",
+                        "60701190"
+                    ),
+                    "0001",
+                    "123456",
+                    Titular(
+                        "40764442058",
+                        "Leonardo Silva",
+                        "ae93a61c-0642-43b3-bb8e-a17072295955"
+                    )
+                )
+            )
         )
-        assertTrue(response.sucesso)
+
+        Mockito.`when`(
+            client.consulta(CHAVE_EXISTENTE.idCliente)
+        ).thenReturn(
+            HttpResponse.ok(
+                TitularResponse(
+                    CHAVE_EXISTENTE.conta.titular.id,
+                    CHAVE_EXISTENTE.conta.titular.nome,
+                    CHAVE_EXISTENTE.conta.titular.cpf,
+                    CHAVE_EXISTENTE.conta.instituicao
+                )
+            )
+        )
+
+        Mockito.`when`(
+            clientBCB.deletaChave(
+                CHAVE_EXISTENTE.valorChave,
+                (DeletePixKeyRequest(CHAVE_EXISTENTE.valorChave))
+            )
+        )
+            .thenReturn(
+                HttpResponse.ok(
+                    DeletePixKeyResponse(
+                        CHAVE_EXISTENTE.valorChave, CHAVE_EXISTENTE.conta.instituicao.ispb,
+                        LocalDateTime.now()
+                    )
+                )
+            )
+    }
+
+    @AfterEach
+    fun cleanUp() {
+        repository.deleteAll()
     }
 
     @Test
-    internal fun deveRetornarFailedPreConditionCasoParametrosVazios() {
+    internal fun deveRemoverChavePix() {
+        val responseRemove = grpcClient.remover(
+            RemoveChavePixRequest.newBuilder()
+                .setClienteId(CHAVE_EXISTENTE.idCliente)
+                .setPixId(CHAVE_EXISTENTE.id)
+                .build()
+        )
+        assertTrue(responseRemove.sucesso)
 
-        val assertThrows = assertThrows<StatusRuntimeException> {
-            val response = grpcClient.remover(
-                RemoveChavePixRequest.newBuilder().build()
-            )
-        }
-        assertEquals(Status.FAILED_PRECONDITION.code,assertThrows.status.code)
+    }
+
+    @MockBean(ItauClient::class)
+    fun client(): ItauClient? {
+        return Mockito.mock(ItauClient::class.java)
+    }
+
+    @MockBean(BCBClient::class)
+    fun clientBCB(): BCBClient? {
+        return Mockito.mock(BCBClient::class.java)
     }
 
     @Factory
     class Clients {
         @Replaces
         @Singleton
-        fun blockStub(@GrpcChannel(GrpcServerChannel.NAME) channel: ManagedChannel): RemoveChavePixGRPCServiceGrpc.RemoveChavePixGRPCServiceBlockingStub? {
+        fun blockStub(@GrpcChannel(GrpcServerChannel.NAME) channel: ManagedChannel):
+                RemoveChavePixGRPCServiceGrpc.RemoveChavePixGRPCServiceBlockingStub? {
             return RemoveChavePixGRPCServiceGrpc.newBlockingStub(channel)
         }
     }

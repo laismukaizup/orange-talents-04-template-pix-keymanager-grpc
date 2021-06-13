@@ -6,9 +6,11 @@ import br.com.zup.academy.RegistraChavePixResponse
 import br.com.zup.academy.handler.ErrorHandler
 import br.com.zup.academy.pix.ChavePixRepository
 import br.com.zup.academy.pix.ChavePixService
+import io.grpc.Status
 import io.grpc.stub.StreamObserver
 import javax.inject.Inject
 import javax.inject.Singleton
+import javax.validation.ConstraintViolationException
 
 @Singleton
 @ErrorHandler
@@ -21,16 +23,24 @@ class CadastraChaveEndpoint(
         request: RegistraChavePixRequest,
         responseObserver: StreamObserver<RegistraChavePixResponse>
     ) {
-        val chavePix = request.toModel()
-        val chavePixRegistrada = chavePixService.cadastra(chavePix)
+        try {
+            val chavePix = request.toModel()
+            val chavePixRegistrada = chavePixService.cadastra(chavePix)
 
-        responseObserver.onNext(
-            RegistraChavePixResponse.newBuilder()
-                .setClienteId(chavePixRegistrada.idCliente.toString())
-                .setPixId(chavePixRegistrada.id.toString())
-                .build()
-        )
-        responseObserver.onCompleted()
-
+            responseObserver.onNext(
+                RegistraChavePixResponse.newBuilder()
+                    .setClienteId(chavePixRegistrada.idCliente.toString())
+                    .setPixId(chavePixRegistrada.id.toString())
+                    .build()
+            )
+            responseObserver.onCompleted()
+        } catch (e: ConstraintViolationException) {
+            responseObserver.onError(
+                Status.INVALID_ARGUMENT
+                    .withDescription(e.message)
+                    .withCause(e.cause)
+                    .asRuntimeException()
+            )
+        }
     }
 }

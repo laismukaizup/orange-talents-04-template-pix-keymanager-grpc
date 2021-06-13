@@ -1,7 +1,7 @@
 package br.com.zup.academy.bancoCentral
 
-class CreatePixKeyRequest(
-    val keyType : KeyType,
+data class CreatePixKeyRequest(
+    val keyType : String,
     val key : String,
     val bankAccount: BankAccount,
     val owner: Owner
