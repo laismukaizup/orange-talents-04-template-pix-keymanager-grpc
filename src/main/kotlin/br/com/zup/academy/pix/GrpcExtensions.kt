@@ -1,13 +1,14 @@
 package br.com.zup.academy.pix.cadastra
 
-import br.com.zup.academy.RegistraChavePixRequest
-import br.com.zup.academy.RemoveChavePixRequest
-import br.com.zup.academy.TipoDeChaveGRPC
-import br.com.zup.academy.TipoDeContaGRPC
+import br.com.zup.academy.*
+import br.com.zup.academy.CarregaChavePixRequest.FiltroCase.*
+import br.com.zup.academy.pix.carrega.Filtro
 import br.com.zup.academy.pix.modelo.TipoDeChave
 import br.com.zup.academy.pix.modelo.TipoDeConta
 import br.com.zup.academy.pix.remove.RemoveCPRequest
 import java.util.*
+import javax.validation.ConstraintViolationException
+import javax.validation.Validator
 
 fun RegistraChavePixRequest.toModel(): CadastraCPRequest {
     return CadastraCPRequest(
@@ -26,4 +27,18 @@ fun RegistraChavePixRequest.toModel(): CadastraCPRequest {
 }
 fun RemoveChavePixRequest.toModel(): RemoveCPRequest {
     return RemoveCPRequest(clienteId, pixId)
+}
+
+fun CarregaChavePixRequest.toModel(validator : Validator): Filtro{
+    val filtro = when (filtroCase){
+        PIXID -> pixId.let { Filtro.PorPixId(it.clienteId, it.pixId) }
+        VALORCHAVE -> Filtro.PorChave(valorChave)
+        FILTRO_NOT_SET -> Filtro.Invalido()
+    }
+    val violations = validator.validate(filtro)
+    if(violations.isNotEmpty()){
+        throw ConstraintViolationException(violations)
+    }
+
+    return filtro
 }

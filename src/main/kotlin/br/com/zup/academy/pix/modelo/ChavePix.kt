@@ -23,7 +23,7 @@ data class ChavePix(
     val tipoConta: TipoDeConta,
 
     @field:Valid
-    @field:ManyToOne(cascade =  arrayOf(CascadeType.PERSIST))
+    @field:ManyToOne(cascade = arrayOf(CascadeType.PERSIST))
     val conta: Conta
 ) {
     @Id
