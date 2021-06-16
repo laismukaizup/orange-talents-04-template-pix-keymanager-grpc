@@ -3,6 +3,7 @@ package br.com.zup.academy.pix.lista
 import br.com.zup.academy.ListaChavePixGRPCServiceGrpc
 import br.com.zup.academy.ListaChavePixRequest
 import br.com.zup.academy.ListaChavePixResponse
+import br.com.zup.academy.handler.ErrorHandler
 import br.com.zup.academy.pix.ChavePixService
 import br.com.zup.academy.pix.cadastra.toModel
 import com.google.protobuf.Timestamp
@@ -12,10 +13,13 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
+@ErrorHandler
 class ListaChaveEndpoint(@Inject private val chavePixService: ChavePixService) :
     ListaChavePixGRPCServiceGrpc.ListaChavePixGRPCServiceImplBase() {
 
     override fun listar(request: ListaChavePixRequest, responseObserver: StreamObserver<ListaChavePixResponse>) {
+        if (request.clienteId.isNullOrBlank())
+            throw IllegalArgumentException("id do cliente não pode ser nula")
 
         val requestCP = request.toModel();
         val chaves = chavePixService.lista(requestCP).map {
@@ -32,10 +36,12 @@ class ListaChaveEndpoint(@Inject private val chavePixService: ChavePixService) :
                 .build()
         }
 
-        responseObserver.onNext(ListaChavePixResponse.newBuilder()
-            .setClienteId(requestCP.clienteId)
-            .addAllChaves(chaves)
-            .build())
+        responseObserver.onNext(
+            ListaChavePixResponse.newBuilder()
+                .setClienteId(requestCP.clienteId)
+                .addAllChaves(chaves)
+                .build()
+        )
 
         responseObserver.onCompleted()
     }

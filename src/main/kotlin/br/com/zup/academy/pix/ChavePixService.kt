@@ -70,11 +70,6 @@ class ChavePixService(
     }
 
     fun lista(@Valid request: ListaCPRequest): List<ChavePix> {
-
-        val itauResponse = itauClient.consulta(request.clienteId)
-        itauResponse.body()?.toModel() ?: throw IllegalStateException("cliente itau não encontrado")
-
         return repository.findByIdCliente(request.clienteId)
-
     }
 }
