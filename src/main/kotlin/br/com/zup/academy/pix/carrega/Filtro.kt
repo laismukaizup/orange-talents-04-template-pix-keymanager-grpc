@@ -20,9 +20,6 @@ sealed class Filtro {
         @field:NotBlank @field:ValidUUID val clienteId: String,
         @field:NotBlank @field:ValidUUID val pixId: String,
     ) : Filtro() {
-//        fun pixIdAsUuid() = UUID.fromString(pixId)
-//        fun clienteIdAsUuid() = UUID.fromString(clienteId)
-
         override fun filtra(repository: ChavePixRepository, bcbClient: BCBClient): ChavePixInfo {
             return repository.findById(pixId)
                 .map(ChavePixInfo::of)
