@@ -3,6 +3,7 @@ package br.com.zup.academy.pix.cadastra
 import br.com.zup.academy.*
 import br.com.zup.academy.CarregaChavePixRequest.FiltroCase.*
 import br.com.zup.academy.pix.carrega.Filtro
+import br.com.zup.academy.pix.lista.ListaCPRequest
 import br.com.zup.academy.pix.modelo.TipoDeChave
 import br.com.zup.academy.pix.modelo.TipoDeConta
 import br.com.zup.academy.pix.remove.RemoveCPRequest
@@ -41,4 +42,8 @@ fun CarregaChavePixRequest.toModel(validator : Validator): Filtro{
     }
 
     return filtro
+}
+
+fun ListaChavePixRequest.toModel(): ListaCPRequest {
+    return ListaCPRequest(clienteId)
 }

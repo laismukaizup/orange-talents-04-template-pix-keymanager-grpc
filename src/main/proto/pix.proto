@@ -20,6 +20,9 @@ service RemoveChavePixGRPCService {
 service CarregaChavePixGRPCService {
     rpc carregar(CarregaChavePixRequest) returns (CarregaChavePixResponse) {}
 }
+service ListaChavePixGRPCService {
+    rpc listar(ListaChavePixRequest) returns (ListaChavePixResponse) {}
+}
 
 enum TipoDeChaveGRPC {
     UNKNOWN_TIPO_CHAVE = 0;
@@ -45,8 +48,6 @@ message RegistraChavePixResponse {
     string clienteId = 1;
     string pixId = 2;
 }
-
-
 
 message RemoveChavePixRequest {
     string clienteId = 1;
@@ -88,6 +89,27 @@ message CarregaChavePixResponse {
     string pidId = 2;
     ChavePix chave = 3;
 }
+
+message ListaChavePixRequest {
+    string clienteId = 1;
+}
+
+message ListaChavePixResponse {
+
+    message ChavePix{
+        string pixId = 1;
+        TipoDeChaveGRPC tipoChave = 2;
+        string valorChave = 3;
+        TipoDeContaGRPC tipoConta = 4;
+        google.protobuf.Timestamp criadoEm = 5;
+    }
+
+
+    string clienteId = 1;
+    repeated ChavePix chaves = 2;
+}
+
+
 
 
 

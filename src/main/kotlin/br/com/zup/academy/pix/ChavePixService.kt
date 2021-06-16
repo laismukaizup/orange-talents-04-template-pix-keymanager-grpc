@@ -6,11 +6,13 @@ import br.com.zup.academy.handler.ChavePixExisteException
 import br.com.zup.academy.handler.ChavePixNaoEncontradaException
 import br.com.zup.academy.itau.ItauClient
 import br.com.zup.academy.pix.cadastra.CadastraCPRequest
+import br.com.zup.academy.pix.lista.ListaCPRequest
 import br.com.zup.academy.pix.modelo.ChavePix
 import br.com.zup.academy.pix.modelo.TipoDeConta
 import br.com.zup.academy.pix.remove.RemoveCPRequest
 import io.micronaut.http.HttpStatus
 import io.micronaut.validation.Validated
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 import javax.transaction.Transactional
@@ -65,5 +67,14 @@ class ChavePixService(
 
         repository.deleteById(request.pixId)
         return true
+    }
+
+    fun lista(@Valid request: ListaCPRequest): List<ChavePix> {
+
+        val itauResponse = itauClient.consulta(request.clienteId)
+        itauResponse.body()?.toModel() ?: throw IllegalStateException("cliente itau não encontrado")
+
+        return repository.findByIdCliente(request.clienteId)
+
     }
 }
